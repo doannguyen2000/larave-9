@@ -39,7 +39,7 @@ Route::middleware('auth:api',)->group(function () {
     Route::post('me', [ApiAccessController::class, 'me'])->name('me');
    
     Route::middleware('checkRole')->group(function () {
-        Route::resource('user', UserController::class)->except('storeUserCourse','destroyUserCourse');
+        Route::resource('user', UserController::class)->except('storeUserCourse','destroyUserCourse','sortUsers','searchUser');
         Route::resource('course', CourseController::class);
         Route::post('user/storeUserCourse', [ UserController::class, 'storeUserCourse'])->name('user.storeUserCourse');
         Route::delete('user/destroyUserCourse/{user}', [ UserController::class, 'destroyUserCourse'])->name('user.destroyUserCourse');

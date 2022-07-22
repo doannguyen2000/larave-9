@@ -4,18 +4,17 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AccessRequest extends FormRequest
+class IdUserRequest extends FormRequest
 {
     public function authorize()
     {
-        return true;
+        return false;
     }
 
     public function rules()
     {
         return [
-            'email' => 'required|email',
-            'password' => 'required'
+            'id' => 'exists:user'
         ];
     }
 }

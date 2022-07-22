@@ -11,40 +11,27 @@ use Illuminate\Support\Facades\Auth;
 
 class AccessController extends Controller
 {
-
-    // public function __construct()
-    // {
-    //     $this->middleware('auth:api', ['except' => ['login']]);
-    // }
-
-    public function login(Request $request)
+    public function login(AccessRequest $request)
     {
-        
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
-
-        if(!Auth::attempt($request->all())){
+        if (!Auth::attempt($request->all())) {
             return response()->json(['message' => 'Account does not exist'], 401);
         }
 
-        if (! $token = Auth::attempt($request->all())) {
+        if (!$token = Auth::attempt($request->all())) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        
+
         return $this->respondWithToken($token);
     }
 
     public function register(Request $request)
     {
-        
     }
 
     public function logout()
     {
         auth()->logout();
-        return response()->json(["message"=>"Sign out successful"], 200);
+        return response()->json(["message" => "Sign out successful"], 200);
     }
 
     public function me()
@@ -57,7 +44,8 @@ class AccessController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => Auth::factory()->getTTL() 
+            'expires_in' => Auth::factory()->getTTL()
         ]);
     }
 }
+

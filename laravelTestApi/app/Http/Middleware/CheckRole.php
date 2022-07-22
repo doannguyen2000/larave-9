@@ -14,7 +14,5 @@ class CheckRole
         }
 
         return response()->json(["message"=>"Insufficient permissions to take action"], 403);
-        // return route('login');
-        
     }
 }
