@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CouserRequest;
+use App\Http\Requests\SearchCourseRequest;
 use App\Http\Resources\ModelCollection;
 use App\Http\Resources\ModelResource;
 use App\Models\Course;
@@ -11,26 +12,35 @@ use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    public function index(Request $request)
+    public function index(SearchCourseRequest $request)
     {
         $searchCourse = Course::where('courseName', 'like', '%' . $request->courseName . '%')
             ->where('courseDescription', 'like', '%' . $request->courseDescription . '%')
-            ->where('courseNote', 'like', '%' . $request->courseNote . '%');
+            ->where('courseNote', 'like', '%' . $request->courseNote . '%')
+            ->where('id', 'like', '%' . $request->id . '%');
 
         if ($searchCourse->count() == 0) {
-            return response()->json(["message" => "No users"], 200);
+            return response()->json(["message" => "No course"], 200);
         }
 
         if (!is_null($request->orderByValue)) {
             $searchCourse = $searchCourse->orderBy($request->orderByValue);
         }
-        
-        return new ModelCollection($searchCourse);
-    }
 
-    public function create(Request $request)
-    {
-        //
+        $searchCourse = $searchCourse->paginate(2);
+
+        $searchCourse = ([
+            'courses' => new ModelCollection($searchCourse->items()),
+            'pagination' => [
+                'total' => $searchCourse->total(),
+                'perPage' => $searchCourse->perPage(),
+                'currentPage' => $searchCourse->currentPage(),
+                'lastPage' => $searchCourse->lastPage(),
+            ],
+            // 'pageUrl' => $searchCourse->getUrlRange(1, $searchCourse->lastPage()),
+        ]);
+
+        return response()->json(['data' => $searchCourse], 200);
     }
 
     public function store(CouserRequest $request)
@@ -51,11 +61,6 @@ class CourseController extends Controller
             return response()->json(["message" => "Course does not exist"], 400);
         }
         return new ModelResource(Course::find($id));
-    }
-
-    public function edit($id)
-    {
-        //
     }
 
     public function update(Request $request, $id)

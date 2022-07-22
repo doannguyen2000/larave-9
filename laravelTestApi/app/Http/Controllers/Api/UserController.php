@@ -12,6 +12,7 @@ use App\Http\Resources\UserCollection;
 use App\Models\User;
 use App\Models\UsersCourse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class UserController extends Controller
 {
@@ -19,7 +20,8 @@ class UserController extends Controller
     {
         $searchUser = User::where('name', 'like', '%' . $request->name . '%')
             ->where('email', 'like', '%' . $request->email . '%')
-            ->where('role', 'like', '%' . $request->role . '%');
+            ->where('role', 'like', '%' . $request->role . '%')
+            ->where('id', 'like', '%' . $request->id . '%');
 
         if ($searchUser->count() == 0) {
             return response()->json(["message" => "No users"], 200);
@@ -29,7 +31,20 @@ class UserController extends Controller
             $searchUser = $searchUser->orderBy($request->orderByValue);
         }
 
-        return new UserCollection($searchUser->get());
+        $searchUser = $searchUser->paginate(2);
+
+        $searchUser = ([
+            'users' => new UserCollection($searchUser->items()),
+            'pagination' => [
+                'total' => $searchUser->total(),
+                'perPage' => $searchUser->perPage(),
+                'currentPage' => $searchUser->currentPage(),
+                'lastPage' => $searchUser->lastPage(),
+            ],
+            // 'pageUrl' => $searchUser->getUrlRange(1, $searchUser->lastPage()),
+        ]);
+
+        return response()->json(['data' => $searchUser], 200);
     }
 
     public function store(UserRequest $request)
@@ -44,7 +59,6 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'avatar' => $request->avatar,
             'avatar' => $request->email . '.' . $request->file('avatar')->getClientOriginalExtension(),
             'role' => $request->role
         ]);
@@ -65,15 +79,6 @@ class UserController extends Controller
             return response()->json(["message" => "User does not exist"], 400);
         }
         return new UserResource(User::find($user));
-    }
-
-    public function edit($user)
-    {
-        if (is_null(User::find($user))) {
-            return response()->json(["message" => "User does not exist"], 400);
-        }
-
-        return new UserResource($user);
     }
 
     public function update(UserUpdateRequest $request, $user)
@@ -108,8 +113,14 @@ class UserController extends Controller
 
     public function destroy($user)
     {
-        if (is_null(User::find($user))) {
+        $user = User::find($user);
+
+        if (is_null($user)) {
             return response()->json(["message" => "User does not exist"], 400);
+        }
+
+        if (File::exists(public_path("uploads/" . $user->avatar))) {
+            File::delete(public_path("uploads/" . $user->avatar));
         }
 
         User::where('id', $user)->delete();
